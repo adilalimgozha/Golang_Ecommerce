@@ -74,7 +74,7 @@ func CreateProductImage(c *gin.Context) {
 	c.JSON(http.StatusCreated, productImages)
 }
 
-// Get product by ID
+// Get product image by ID
 func GetProductImageByID(c *gin.Context) {
 	var productImages models.ProductImage
 	id := c.Param("id")
@@ -84,4 +84,88 @@ func GetProductImageByID(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, productImages)
+}
+
+// Get all product reviews
+func GetProductReviews(c *gin.Context) {
+	var productReviews []models.Review
+	result := config.DB.Preload("Product").Preload("User").Find(&productReviews)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve product reviews"})
+		return
+	}
+	c.JSON(http.StatusOK, productReviews)
+}
+
+// Create a new product image
+func CreateProductReview(c *gin.Context) {
+	var productReviews models.Review
+	if err := c.ShouldBindJSON(&productReviews); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	result := config.DB.Create(&productReviews)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create product review"})
+		return
+	}
+	c.JSON(http.StatusCreated, productReviews)
+}
+
+// Get product review by ID
+func GetProductReviewByID(c *gin.Context) {
+	var productReviews models.Review
+	id := c.Param("id")
+	result := config.DB.First(&productReviews, id)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product Review not found"})
+		return
+	}
+	c.JSON(http.StatusOK, productReviews)
+}
+
+// Update product review by ID
+func UpdateProductReview(c *gin.Context) {
+	var review models.Review
+	id := c.Param("id")
+
+	result := config.DB.First(&review, id)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product Review not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&review); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	result = config.DB.Save(&review)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product review"})
+		return
+	}
+
+	c.JSON(http.StatusOK, review)
+}
+
+// Delete product review by ID
+func DeleteProductReview(c *gin.Context) {
+	var review models.Review
+	id := c.Param("id")
+
+	result := config.DB.First(&review, id)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product Review not found"})
+		return
+	}
+
+	result = config.DB.Delete(&review)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product review"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product review deleted successfully"})
 }

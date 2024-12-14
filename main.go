@@ -110,15 +110,49 @@ func main() {
 	router.POST("/users", controllers.CreateUser)
 	router.GET("/users/:id", controllers.GetUserByID)
 
+	// User Adress routes
+	router.GET("/users/address", controllers.GetUserAddress)
+	router.POST("/users/address", controllers.CreateUserAddress)
+	router.GET("/users/address/:id", controllers.GetUserAddressByID)
+
 	// Product routes
 	router.GET("/products", controllers.GetProducts)
 	router.POST("/products", controllers.CreateProduct)
 	router.GET("/products/:id", controllers.GetProductByID)
 
 	// Product Images routes
-	router.GET("/productImages", controllers.GetProductImages)
-	router.POST("/productImages", controllers.CreateProductImage)
-	router.GET("/productImages/:id", controllers.GetProductImageByID)
+	router.GET("/products/images", controllers.GetProductImages)
+	router.POST("/products/images", controllers.CreateProductImage)
+	router.GET("/products/images/:id", controllers.GetProductImageByID)
+
+	// Product Reviews routes
+	router.GET("/products/reviews", controllers.GetProductReviews)
+	router.POST("/products/reviews", controllers.CreateProductReview)
+	router.GET("/products/reviews/:id", controllers.GetProductReviewByID)
+	router.PUT("/products/reviews/:id", controllers.UpdateProductReview)
+	router.DELETE("/products/reviews/:id", controllers.DeleteProductReview)
+
+	// Shopping Cart routes
+	router.GET("/shopping_cart", controllers.GetShoppingCarts)
+	router.POST("/shopping_cart", controllers.CreateShoppingCart)
+	router.GET("/shopping_cart/:id", controllers.GetShoppingCartByID)
+
+	// Cart Items routes
+	router.GET("/shopping_cart/items", controllers.GetCartItems)
+	router.POST("/shopping_cart/items", controllers.CreateCartItem)
+	router.GET("/shopping_cart/items/:id", controllers.GetCartItemByID)
+	router.DELETE("/shopping_cart/items/:id", controllers.DeleteCartItem)
+
+	// Orders routes
+	router.GET("/orders", controllers.GetOrders)
+	router.POST("/orders", controllers.CreateOrder)
+	router.GET("/orders/:id", controllers.GetOrderByID)
+
+	// Order Items routes
+	router.GET("/orders/items", controllers.GetOrderItems)
+	router.POST("/orders/items", controllers.CreateCartItem)
+	router.GET("/orders/items/:id", controllers.GetCartItemByID)
+	router.DELETE("/orders/items/:id", controllers.DeleteCartItem)
 
 	// Run the server
 	router.Run(":8080")

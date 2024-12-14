@@ -46,3 +46,42 @@ func GetUserByID(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, user)
 }
+
+// Get all user addresses
+func GetUserAddress(c *gin.Context) {
+	var user_addresses []models.UserAddress
+	result := config.DB.Preload("User").Find(&user_addresses)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve user_addresses"})
+		return
+	}
+	c.JSON(http.StatusOK, user_addresses)
+}
+
+// Create a new user address
+func CreateUserAddress(c *gin.Context) {
+	var user_addresse models.UserAddress
+	if err := c.ShouldBindJSON(&user_addresse); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	result := config.DB.Create(&user_addresse)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create user_addresses"})
+		return
+	}
+	c.JSON(http.StatusCreated, user_addresse)
+}
+
+// Get user address by ID
+func GetUserAddressByID(c *gin.Context) {
+	var user_addresse models.UserAddress
+	id := c.Param("id")
+	result := config.DB.First(&user_addresse, id)
+	if result.Error != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user_addresse not found"})
+		return
+	}
+	c.JSON(http.StatusOK, user_addresse)
+}
