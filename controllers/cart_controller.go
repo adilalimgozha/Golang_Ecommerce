@@ -47,55 +47,33 @@ func GetShoppingCartByID(c *gin.Context) {
 	c.JSON(http.StatusOK, shoppingCart)
 }
 
-// Get all ShoppingCarts
+// GetShoppingCart - Get all items in the user's shopping cart with product details
 func GetCartItems(c *gin.Context) {
 	var cartItems []models.CartItem
-	result := config.DB.Preload("Cart").Preload("Product").Find(&cartItems)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to retrieve Cart Items"})
+	var userCartID = 1
+	// Preload the Product data along with CartItem data
+	if err := config.DB.Preload("Product").Where("cart_id = ?", userCartID).Find(&cartItems).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch shopping cart"})
 		return
 	}
+
+	// Return the cart items along with product details
 	c.JSON(http.StatusOK, cartItems)
 }
 
 // CreateCartItem with descreasing amount of stock
 func CreateCartItem(c *gin.Context) {
 	var cartItem models.CartItem
-
 	if err := c.ShouldBindJSON(&cartItem); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	tx := config.DB.Begin()
-
-	var product models.Product
-	if err := tx.Where("product_id = ?", cartItem.ProductID).First(&product).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+	result := config.DB.Create(&cartItem)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create Order"})
 		return
 	}
-
-	if product.Stock < cartItem.Quantity {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not enough stock for this product"})
-		return
-	}
-
-	product.Stock -= cartItem.Quantity
-	if err := tx.Save(&product).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product stock"})
-		return
-	}
-
-	if err := tx.Create(&cartItem).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Cart Item"})
-		return
-	}
-
-	tx.Commit()
 
 	c.JSON(http.StatusCreated, cartItem)
 }

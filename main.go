@@ -5,7 +5,9 @@ import (
 
 	"github.com/adilalimgozha/Golang_Ecommerce/config"
 	"github.com/adilalimgozha/Golang_Ecommerce/controllers"
+	"github.com/adilalimgozha/Golang_Ecommerce/middleware"
 	"github.com/adilalimgozha/Golang_Ecommerce/models"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,91 +17,84 @@ func main() {
 	// Initialize the Gin router
 	router := gin.Default()
 
-	// Миграция таблицы Role
+	// CORS middleware
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Content-Type"},
+		AllowCredentials: true,
+	}))
+
 	err := config.DB.AutoMigrate(&models.Role{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Role: %v", err)
 	}
 
-	// Миграция таблицы User
 	err = config.DB.AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatalf("Failed to migrate User: %v", err)
 	}
 
-	// Миграция таблицы Category
 	err = config.DB.AutoMigrate(&models.Category{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Category: %v", err)
 	}
 
-	// Миграция таблицы Product
 	err = config.DB.AutoMigrate(&models.Product{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Product: %v", err)
 	}
 
-	// Миграция таблицы ShoppingCart
 	err = config.DB.AutoMigrate(&models.ShoppingCart{})
 	if err != nil {
 		log.Fatalf("Failed to migrate ShoppingCart: %v", err)
 	}
 
-	// Миграция таблицы CartItem
 	err = config.DB.AutoMigrate(&models.CartItem{})
 	if err != nil {
 		log.Fatalf("Failed to migrate CartItem: %v", err)
 	}
 
-	// Миграция таблицы Order
 	err = config.DB.AutoMigrate(&models.Order{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Order: %v", err)
 	}
 
-	// Миграция таблицы OrderItem
 	err = config.DB.AutoMigrate(&models.OrderItem{})
 	if err != nil {
 		log.Fatalf("Failed to migrate OrderItem: %v", err)
 	}
 
-	// Миграция таблицы Payment
 	err = config.DB.AutoMigrate(&models.Payment{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Payment: %v", err)
 	}
 
-	// Миграция таблицы Review
 	err = config.DB.AutoMigrate(&models.Review{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Review: %v", err)
 	}
 
-	// Миграция таблицы Session
 	err = config.DB.AutoMigrate(&models.Session{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Session: %v", err)
 	}
 
-	// Миграция таблицы UserAddress
 	err = config.DB.AutoMigrate(&models.UserAddress{})
 	if err != nil {
 		log.Fatalf("Failed to migrate UserAddress: %v", err)
 	}
 
-	// Миграция таблицы ProductImage
 	err = config.DB.AutoMigrate(&models.ProductImage{})
 	if err != nil {
 		log.Fatalf("Failed to migrate ProductImage: %v", err)
 	}
 
-	// Миграция таблицы AuditLog
 	err = config.DB.AutoMigrate(&models.AuditLog{})
 	if err != nil {
 		log.Fatalf("Failed to migrate AuditLog: %v", err)
 	}
 
-	// Миграция таблицы Cache
 	err = config.DB.AutoMigrate(&models.Cache{})
 	if err != nil {
 		log.Fatalf("Failed to migrate Cache: %v", err)
@@ -107,7 +102,7 @@ func main() {
 
 	// User routes
 	router.GET("/users", controllers.GetUsers)
-	router.POST("/users", controllers.CreateUser)
+	router.POST("/register", controllers.CreateUser)
 	router.GET("/users/:id", controllers.GetUserByID)
 
 	// User Adress routes
@@ -150,9 +145,19 @@ func main() {
 
 	// Order Items routes
 	router.GET("/orders/items", controllers.GetOrderItems)
-	router.POST("/orders/items", controllers.CreateCartItem)
-	router.GET("/orders/items/:id", controllers.GetCartItemByID)
-	router.DELETE("/orders/items/:id", controllers.DeleteCartItem)
+	router.POST("/orders/items", controllers.CreateOrderItem)
+	router.GET("/orders/items/:id", controllers.GetOrderItemByID)
+	router.DELETE("/orders/items/:id", controllers.DeleteOrderItem)
+
+	// Public Routes (No JWT required)
+	router.POST("/login", controllers.Login) // Login route
+
+	// Protected Routes (JWT required)
+	protected := router.Group("/protected")
+	protected.Use(middleware.JWTAuthMiddleware()) // Apply JWT middleware to this group
+	{
+		protected.GET("/profile", controllers.GetProfile)
+	}
 
 	// Run the server
 	router.Run(":8080")

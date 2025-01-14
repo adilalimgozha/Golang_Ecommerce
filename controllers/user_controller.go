@@ -22,17 +22,46 @@ func GetUsers(c *gin.Context) {
 // Create a new user
 func CreateUser(c *gin.Context) {
 	var user models.User
+
+	// Получаем данные из тела запроса
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный запрос"})
 		return
 	}
 
-	result := config.DB.Create(&user)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create user"})
+	// Проверка на уникальность имени пользователя
+	var existingUser models.User
+	if err := config.DB.Where("username = ?", user.Username).First(&existingUser).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Имя пользователя уже занято"})
 		return
 	}
-	c.JSON(http.StatusCreated, user)
+
+	// Проверка на уникальность email
+	if err := config.DB.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Этот email уже используется"})
+		return
+	}
+
+	// Хэшируем пароль перед сохранением
+	if err := user.SetPassword(user.PasswordHash); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при хэшировании пароля"})
+		return
+	}
+
+	// Сохраняем нового пользователя в базу данных
+	if err := config.DB.Create(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при создании пользователя"})
+		return
+	}
+
+	// Отправляем успешный ответ
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Пользователь успешно зарегистрирован",
+		"user": gin.H{
+			"username": user.Username,
+			"email":    user.Email,
+		},
+	})
 }
 
 // Get user by ID
